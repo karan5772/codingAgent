@@ -1,42 +1,50 @@
 import { OpenAI } from "openai";
 import "dotenv/config";
-import axios from "axios";
 import readline from "readline";
+import { exec } from "child_process";
 
 const openai = new OpenAI();
 
-console.log(` **       ** ********     **     ********** **      ** ******** *******             **       ********  ******** ****     ** **********
-/**      /**/**/////     ****   /////**/// /**     /**/**///// /**////**           ****     **//////**/**///// /**/**   /**/////**/// 
-/**   *  /**/**         **//**      /**    /**     /**/**      /**   /**          **//**   **      // /**      /**//**  /**    /**    
-/**  *** /**/*******   **  //**     /**    /**********/******* /*******          **  //** /**         /******* /** //** /**    /**    
-/** **/**/**/**////   **********    /**    /**//////**/**////  /**///**         **********/**    *****/**////  /**  //**/**    /**    
-/**** //****/**      /**//////**    /**    /**     /**/**      /**  //**       /**//////**//**  ////**/**      /**   //****    /**    
-/**/   ///**/********/**     /**    /**    /**     /**/********/**   //**      /**     /** //******** /********/**    //***    /**    
-//       // //////// //      //     //     //      // //////// //     //       //      //   ////////  //////// //      ///     //     `);
+console.log(`
+ ██████╗ ██████╗ ██████╗ ██╗███╗   ██╗ ██████╗      █████╗  ██████╗ ███████╗███╗   ██╗████████╗
+██╔════╝██╔═══██╗██╔══██╗██║████╗  ██║██╔════╝     ██╔══██╗██╔════╝ ██╔════╝████╗  ██║╚══██╔══╝
+██║     ██║   ██║██║  ██║██║██╔██╗ ██║██║  ███╗    ███████║██║  ███╗█████╗  ██╔██╗ ██║   ██║   
+██║     ██║   ██║██║  ██║██║██║╚██╗██║██║   ██║    ██╔══██║██║   ██║██╔══╝  ██║╚██╗██║   ██║   
+╚██████╗╚██████╔╝██████╔╝██║██║ ╚████║╚██████╔╝    ██║  ██║╚██████╔╝███████╗██║ ╚████║   ██║   
+ ╚═════╝ ╚═════╝ ╚═════╝ ╚═╝╚═╝  ╚═══╝ ╚═════╝     ╚═╝  ╚═╝ ╚═════╝ ╚══════╝╚═╝  ╚═══╝   ╚═╝   
+                                                                                               `);
 
 import { stdin as input, stdout as output } from "node:process";
 const rl = readline.createInterface({ input, output });
 
-async function getWeather(city) {
-  const url = `https://wttr.in/${city.toLowerCase()}?format=%C+%t`;
-  const result = await axios.get(url, { responseType: "text" });
-  return `The weather of ${city} is ${result.data}`;
+async function runCmd(cmd) {
+  return new Promise((resolve, reject) => {
+    exec(cmd, (err, data) => {
+      if (err) {
+        return resolve(`Error running the ${cmd} command : ${err}`);
+      } else {
+        resolve(data);
+      }
+    });
+  });
 }
 
 const availableFunctions = {
-  getWeather: {
-    tool: "getWeather",
-    fn: getWeather,
+  runCmd: {
+    tool: "runCmd",
+    fn: runCmd,
     description:
-      "Takes city as string an input and returns the weather of that city",
+      "Takes a linux / unix command as arg and executes the command on user's machine and returns the output",
   },
 };
 
 const SYSTEM_PROMPT = `
-You are an helpfull AI Assistant who is specialized in resolving user query.
+You are an helpfull AI Assistant who is specialized in writing the code and also to make the code perfect and with good UI and UX.
 You work on start, plan, action, observe mode.
 For the given user query and available tools, plan the step by step execution, based on the planning, select the relevant tool from the available tool. and based on the tool selection you perform an action
 Wait for the observation and based on the observation from the tool call resolve the user query.
+
+And you must not ask the user anything, once a task is given to you, you must complete it anyways.
 
 Rules:
 - Follow the Output JSON Format.
@@ -78,13 +86,13 @@ function question(query = "") {
 async function startAgent() {
   while (true) {
     const query = await question(
-      "🤖 : Welcome to the Weather AI Agent \n🤖 : Which city's weather would you like to know about ?\n👨 : "
+      "🤖 : What do you need me to help you with ?\n🤖 : I can do your basic websites like using HTML, CSS or JS.\n🤖 : Or something like to setup your envirnment\n👨 : "
     );
     messagesDB.push({ role: "user", content: query });
 
     inner: while (true) {
       const result = await openai.chat.completions.create({
-        model: "gpt-4.1",
+        model: "gpt-4.1-mini",
         response_format: { type: "json_object" },
         messages: messagesDB,
       });
@@ -99,11 +107,12 @@ async function startAgent() {
 
       switch (step) {
         case "plan":
-          // console.log(`🤖 : ${parsedResponse.content}`);
+          console.log(`🤖 : ${parsedResponse.content}`);
           continue;
 
         case "action": {
           const { tool, input } = parsedResponse;
+          // console.log(`🤖 : ${tool}, ${input}`);
           const mapping = availableFunctions[tool];
           if (!mapping) {
             messagesDB.push({
@@ -112,7 +121,7 @@ async function startAgent() {
             });
             continue;
           }
-          const output = await mapping.fn(input); //calling the function
+          const output = await mapping.fn(input);
           messagesDB.push({
             role: "developer",
             content: JSON.stringify({ step: "observe", output: output }),
