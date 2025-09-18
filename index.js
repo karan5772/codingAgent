@@ -112,7 +112,7 @@ async function startAgent() {
 
         case "action": {
           const { tool, input } = parsedResponse;
-          // console.log(`🤖 : ${tool}, ${input}`);
+          console.log(`🤖 : ${tool}, ${input}`);
           const mapping = availableFunctions[tool];
           if (!mapping) {
             messagesDB.push({
