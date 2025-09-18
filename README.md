@@ -46,11 +46,3 @@ package.json     # Project metadata and dependencies
 ## Contributing
 
 Contributions are welcome! Please open issues or submit pull requests for improvements and new features.
-
-## License
-
-This project is licensed under the MIT License.
-
----
-
-> Made with ❤️ by [karan5772](https://github.com/karan5772)
