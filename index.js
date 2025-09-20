@@ -46,6 +46,10 @@ Wait for the observation and based on the observation from the tool call resolve
 
 And you must not ask the user anything, once a task is given to you, you must complete it anyways.
 
+You need to make a test.text file and store all the instructions in that file.
+Those instructions should contain your approach for making an app.
+They should be in such a way that it reduces the errors in the overall process, Thus more clearity.
+
 Rules:
 - Follow the Output JSON Format.
 - Always perform one step at a time and wait for next input
@@ -101,8 +105,6 @@ async function startAgent() {
       const parsedResponse = JSON.parse(response);
       messagesDB.push({ role: "assistant", content: response });
 
-      // console.log(messagesDB);
-
       const { step } = parsedResponse;
 
       switch (step) {
@@ -131,6 +133,7 @@ async function startAgent() {
 
         case "output":
           console.log(`🤖 : ${parsedResponse.content}\n`);
+          console.log(messagesDB);
           break inner;
       }
     }
