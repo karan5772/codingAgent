@@ -90,7 +90,7 @@ function question(query = "") {
 async function startAgent() {
   while (true) {
     const query = await question(
-      "🤖 : What do you need me to help you with ?\n🤖 : I can do your basic websites like using HTML, CSS or JS.\n🤖 : Or something like to setup your envirnment\n👨 : "
+      "🤖 : What do you need me to help you with ?\n🤖 : I can help you with building websites. Whould do you want?\n🤖 : A envirnment setup or something like to setup your envirnment\n👨 : "
     );
     messagesDB.push({ role: "user", content: query });
 
